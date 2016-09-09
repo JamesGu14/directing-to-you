@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= title %></title>
+    <link rel='stylesheet' href='/stylesheets/style.css' />
+  </head>
+  <body>
+    <h1><%= title %></h1>
+    <p>Welcome to <%= title %></p>
+    <div id="out"></div>
+    <br /><br />
+    <input type="text" id="phone" value="123" />
+    <button onclick="uploadLocation()">Allow others to visit me</button>
+    <script src="/javascripts/jquery.min.js"></script>
+    <script>
+      var latitude;
+      var longitude;
+      (function() {
+        var output = document.getElementById("out");
+
+        if (!navigator.geolocation){
+          output.innerHTML = "<p>Geolocation is not supported by your browser</p>";
+          return;
+        }
+
+        function success(position) {
+          latitude  = position.coords.latitude;
+          longitude = position.coords.longitude;
+
+          output.innerHTML = '<p>Latitude is ' + latitude + '° <br>Longitude is ' + longitude + '°</p>';
+
+          // var img = new Image();
+          // img.src = "https://maps.googleapis.com/maps/api/staticmap?center=" + latitude + "," + longitude + "&zoom=13&size=300x300&sensor=false";
+
+          // output.appendChild(img);
+        };
+
+        function error() {
+          output.innerHTML = "Unable to retrieve your location";
+        };
+
+        output.innerHTML = "<p>Locating…</p>";
+
+        navigator.geolocation.getCurrentPosition(success, error);
+      })()
+
+      function uploadLocation() {
+        if (!latitude || !longitude) {
+          return alert('Your location is not available')
+        }
+        $.post('/uploadLocation', {
+          phone: $('#phone').val(),
+          latitude: latitude,
+          longitude: longitude
+        }, function(res) {
+          if(res && res.res == 'success') {
+            return alert('Successfully upload your current location')
+          }
+
+          return alert('Upload failed: ' + res.res)
+        })
+      }
+    </script>
+  </body>
+</html>

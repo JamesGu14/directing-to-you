@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= title %></title>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+    <meta charset="utf-8">
+    <link rel='stylesheet' href='/stylesheets/style.css' />
+    <style>
+      html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+      #map {
+        height: 100%;
+      }
+      #floating-panel {
+        position: absolute;
+        top: 10px;
+        left: 25%;
+        z-index: 5;
+        background-color: #fff;
+        padding: 5px;
+        border: 1px solid #999;
+        text-align: center;
+        font-family: 'Roboto','sans-serif';
+        line-height: 30px;
+        padding-left: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1><%= title %></h1>
+    <p>Welcome to <%= title %></p>
+
+    <input type="text" id="phone" value="001" />
+    <button onclick="getDirection()">Get Direction to him</button>
+
+    <div id="map"></div>
+
+    <script src="/javascripts/jquery.min.js"></script>
+    <script>
+      var latitude
+      var longitude
+      var directionsService
+      var directionsDisplay
+      (function() {
+        var output = document.getElementById("out");
+
+        if (!navigator.geolocation){
+          output.innerHTML = "<p>Geolocation is not supported by your browser</p>";
+          return;
+        }
+
+        function success(position) {
+          latitude  = position.coords.latitude;
+          longitude = position.coords.longitude;
+
+          // var img = new Image();
+          // img.src = "https://maps.googleapis.com/maps/api/staticmap?center=" + latitude + "," + longitude + "&zoom=13&size=300x300&sensor=false";
+
+          // output.appendChild(img);
+        };
+
+        function error() {
+          output.innerHTML = "Unable to retrieve your location";
+        };
+
+        navigator.geolocation.getCurrentPosition(success, error);
+      })()
+
+      function getDirection() {
+        
+        var phone = $('#phone').val()
+        $.get('/getUserLocation/' + phone, function (data) {
+          if (data.res !== 'success') {
+            return alert('Cannot direct: ' + data.res)
+          }
+          return calculateAndDisplayRoute(directionsService, directionsDisplay, data.latitude, data.longitude)
+        })
+      }
+
+      function initMap() {
+        directionsService = new google.maps.DirectionsService;
+        directionsDisplay = new google.maps.DirectionsRenderer;
+        var map = new google.maps.Map(document.getElementById('map'), {
+          zoom: 7,
+          center: {lat: 41.85, lng: -87.65}
+        });
+        directionsDisplay.setMap(map);
+      }
+
+      function calculateAndDisplayRoute(directionsService, directionsDisplay, destLatitude, destLongitude) {
+        directionsService.route({
+          origin: latitude + ',' + longitude,
+          destination: destLatitude + ',' + destLongitude,
+          travelMode: 'DRIVING'
+        }, function(response, status) {
+          if (status === 'OK') {
+            directionsDisplay.setDirections(response);
+          } else {
+            window.alert('Directions request failed due to ' + status);
+          }
+        });
+      }
+    </script>
+    <script async defer
+      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBVsuQqvAehAcBp6H957q7a8nc2En02lvA&callback=initMap">
+    </script>
+  </body>
+</html>
